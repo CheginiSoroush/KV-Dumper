@@ -1,0 +1,8 @@
+name = "kv-dumper"
+main = "index.js" 
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "db1"
+database_name = "kv-dumper-db"
+database_id = "c046f0e1-8e6b-4199-b804-9b9fd995a31b"
