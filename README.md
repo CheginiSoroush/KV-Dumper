@@ -2,7 +2,7 @@
 # 📥 KV-Dumper - Telegram Content Queue Bot
 
 یک ربات تلگرام Serverless برای مدیریت، صف‌بندی و ارسال زمان‌بندی شده محتوا به کانال‌ها. این ربات به ادمین اجازه می‌دهد عکس، ویدیو و متن را در صف (Queue) ذخیره کند و سپس با یک کلیک، تمام آن‌ها را با تاخیر ۱۰ ثانیه‌ای به کانال ارسال کند تا از محدودیت‌های تلگرام جلوگیری شود.
-
+https://imsoroush.ir/computer/Other_computer/kv-dumper
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot_API-2CA5E0?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/)
