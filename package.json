@@ -1,0 +1,19 @@
+{
+  "name": "kv-dumper",
+  "version": "2.0.0",
+  "description": "Telegram content queue bot for Cloudflare Workers (D1 + Cron Triggers)",
+  "author": "CheginiSoroush <lmsoroush@proton.me>",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "db:init": "wrangler d1 execute kv-dumper-db --remote --file=./schema.sql",
+    "db:upgrade": "wrangler d1 execute kv-dumper-db --remote --file=./migrations/v1-to-v2.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
