@@ -1,0 +1,16 @@
+# KV-Dumper — Cloudflare Workers configuration template
+#
+# Copy this file to wrangler.toml and fill in your own values:
+#   cp wrangler.toml.example wrangler.toml
+#
+# wrangler.toml is git-ignored on purpose because it contains
+# deployment-specific identifiers.
+
+name = "kv-dumper"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "db1"
+database_name = "kv-dumper-db"
+database_id = "<YOUR_D1_DATABASE_ID>"
