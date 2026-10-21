@@ -1,0 +1,35 @@
+# KV-Dumper — automatic deployment to Cloudflare Workers
+#
+# Runs on every push to main. Requires the following repository secrets:
+#   CLOUDFLARE_API_TOKEN  — an API token with "Workers Scripts: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID — your Cloudflare account ID
+#
+# Set both under: Settings → Secrets and variables → Actions
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
