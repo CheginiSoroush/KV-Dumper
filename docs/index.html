@@ -564,7 +564,7 @@ https://kv-dumper.<span class="str">&lt;subdomain&gt;</span>.workers.dev<span cl
         <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener" data-en="Cloudflare Workers" data-fa="Cloudflare Workers">Cloudflare Workers</a>
       </div>
     </div>
-    <div class="foot-copy" data-en="© 2025 CheginiSoroush — KV-Dumper is released under the MIT License." data-fa="© ۲۰۲۵ CheginiSoroush — KV-Dumper تحت لایسنس MIT منتشر شده است.">© 2025 CheginiSoroush — KV-Dumper is released under the MIT License.</div>
+    <div class="foot-copy" data-en="© {y} CheginiSoroush — KV-Dumper is released under the MIT License." data-fa="© {y} CheginiSoroush — KV-Dumper تحت لایسنس MIT منتشر شده است.">© 2026 CheginiSoroush — KV-Dumper is released under the MIT License.</div>
   </div>
 </footer>
 
@@ -587,7 +587,8 @@ https://kv-dumper.<span class="str">&lt;subdomain&gt;</span>.workers.dev<span cl
       document.body.classList.toggle('fa-mode', fa);
       toggle.textContent = fa ? 'EN' : 'فا';
       document.querySelectorAll('[data-en]').forEach(function (el) {
-        el.textContent = fa ? (el.getAttribute('data-fa') || el.getAttribute('data-en')) : el.getAttribute('data-en');
+        var template = fa ? (el.getAttribute('data-fa') || el.getAttribute('data-en')) : el.getAttribute('data-en');
+        el.textContent = template.replace('{y}', new Date().getFullYear());
       });
       try { localStorage.setItem('kvdumper-lang', lang); } catch (e) {}
     }
