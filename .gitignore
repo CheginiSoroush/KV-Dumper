@@ -1,3 +1,11 @@
+# Dependencies
 node_modules/
+
+# Deployment-specific configuration (use wrangler.toml.example instead)
 wrangler.toml
+
+# Local development secrets
 .dev.vars
+
+# Wrangler local state
+.wrangler/
