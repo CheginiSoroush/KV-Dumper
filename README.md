@@ -2,217 +2,217 @@
 
 # 📨 KV-Dumper
 
-**ربات صف‌کننده و ارسال زمان‌بندی‌شدهٔ محتوا برای کانال‌های تلگرام**
-**کاملاً Serverless روی Cloudflare Workers + D1**
+**Telegram content queueing & scheduled publishing bot**
+**Fully serverless on Cloudflare Workers + D1**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.0.0-blueviolet)](../../releases)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Database](https://img.shields.io/badge/Database-D1-orange)](https://developers.cloudflare.com/d1/)
 [![Telegram Bot API](https://img.shields.io/badge/Telegram-Bot_API-26A5E4?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
-[![Checks](https://img.shields.io/badge/checks-33%2F33%20passed-brightgreen)](#-صحتسنجی)
+[![Checks](https://img.shields.io/badge/checks-33%2F33%20passed-brightgreen)](#-verification)
 [![Deploy](https://github.com/CheginiSoroush/KV-Dumper/actions/workflows/deploy.yml/badge.svg)](../../actions/workflows/deploy.yml)
 
-**[🌐 صفحهٔ پروژه](https://cheginisoroush.github.io/KV-Dumper/)** &nbsp;·&nbsp; [English](README.en.md) | **فارسی**
+**[🌐 Project page](https://cheginisoroush.github.io/KV-Dumper/)** &nbsp;·&nbsp; **English** | [فارسی](README.fa.md)
 
 </div>
 
 ---
 
-KV-Dumper محتوایی که برایتان می‌فرستید (عکس، ویدیو، متن و آلبوم) در صف ذخیره می‌کند و با فشار یک دکمه، آن‌ها را با فاصلهٔ زمانی مطمئن و بدون تداخل به کانال ارسال می‌کند. هیچ سروری وجود ندارد؛ فقط یک Worker رایگان، یک دیتابیس D1 و یک کران‌تریکگر هر یک دقیقه.
+KV-Dumper queues whatever you send it — photos, videos, text and albums — and publishes everything to your channel at safe, collision-free intervals with a single button press. There is no server to run: just a free Worker, a D1 database and a cron trigger firing once a minute.
 
-> 💡 **بدون هزینه، بدون نگهداری:** پلن رایگان Workers برای استفادهٔ شخصی کاملاً کافی است و همهٔ داده‌ها در D1 باقی می‌مانند — حتی بعد از خطا.
+> 💡 **Free, zero-maintenance:** the Workers free tier is plenty for personal use, and all data persists in D1 — even across failures.
 
-## 📑 فهرست
+## 📑 Table of contents
 
-- [✨ امکانات](#-امکانات)
-- [🧱 معماری](#-معماری)
-- [🚀 راه‌اندازی سریع](#-راهاندازی-سریع)
-- [🔐 متغیرها و Secrets](#-متغیرها-و-secrets)
-- [🤖 پنل مدیریت](#-پنل-مدیریت)
-- [🗄 دیتابیس](#-دیتابیس)
-- [⚙️ تنظیمات پردازش](#️-تنظیمات-پردازش)
-- [🌐 نقاط پایانی HTTP](#-نقاط-پایانی-http)
-- [🔄 استقرار خودکار (CI/CD)](#-استقرار-خودکار-cicd)
-- [⬆️ ارتقا از نسخهٔ ۱ به ۲](#️-ارتقا-از-نسخهٔ-۱-به-۲)
-- [🧪 صحت‌سنجی](#-صحتسنجی)
-- [🗺 نقشهٔ راه](#-نقشهٔ-راه)
-- [📄 لایسنس](#-لایسنس)
+- [✨ Features](#-features)
+- [🧱 Architecture](#-architecture)
+- [🚀 Quick start](#-quick-start)
+- [🔐 Variables & secrets](#-variables--secrets)
+- [🤖 Admin panel](#-admin-panel)
+- [🗄 Database](#-database)
+- [⚙️ Processor tuning](#️-processor-tuning)
+- [🌐 HTTP endpoints](#-http-endpoints)
+- [🔄 Continuous deployment (CI/CD)](#-continuous-deployment-cicd)
+- [⬆️ Upgrading from v1](#️-upgrading-from-v1)
+- [🧪 Verification](#-verification)
+- [🗺 Roadmap](#-roadmap)
+- [📄 License](#-license)
 
-## ✨ امکانات
+## ✨ Features
 
-| | قابلیت | توضیح |
+| | Feature | Description |
 |---|---|---|
-| 📥 | **صف‌بندی محتوا** | هر عکس، ویدیو یا متنی که برای ربات بفرستید در صف ذخیره می‌شود |
-| ⏱ | **ارسال زمان‌بندی‌شده** | پردازشگر Cron با فاصلهٔ ۱۰ ثانیه‌ای بین پست‌ها، ایمن از محدودیت Flood تلگرام |
-| 🖼 | **پشتیبانی آلبوم** | اعضای یک `media_group` با `sendMediaGroup` به‌صورت گروهی ارسال می‌شوند |
-| 🔐 | **وب‌هوک امن** | اعتبارسنجی هدر `X-Telegram-Bot-Api-Secret-Token`؛ درخواست‌های غریبه رد می‌شوند |
-| 🔁 | **تلاش مجدد هوشمند** | خطاهای موقت تا ۳ بار تکرار می‌شوند؛ `retry_after` مربوط به 429 رعایت می‌شود |
-| 🔥 | **Dead Letter Queue** | خطاهای دائمی با ذخیرهٔ علت، برای بازبینی و بازگردانی ادمین نگه داشته می‌شوند |
-| 🚫 | **بدون ارسال تکراری** | claim اتمیک با `UPDATE ... RETURNING` — هر آیتم فقط به یک پردازشگر می‌رسد |
-| 📊 | **آمار و پیش‌نمایش** | صف انتظار، خطاها، ارسال امروز و کل + پیش‌نمایش ۵ محتوای آخر |
-| ⏹ | **کنترل کامل** | شروع/توقف ارسال، پاکسازی با تأیید inline، کلید اصلی روشن/خاموش |
-| 🧩 | **معماری ماژولار** | ۶ ماژول متمرکز با منبع واحد برای تنظیمات و لیبل‌ها |
+| 📥 | **Content queueing** | Every photo, video or text you send to the bot is stored in the queue |
+| ⏱ | **Scheduled publishing** | A cron processor paced at 10 s per post, well under Telegram's flood limits |
+| 🖼 | **Album support** | Members of a `media_group` are delivered together via `sendMediaGroup` |
+| 🔐 | **Secure webhook** | Validates the `X-Telegram-Bot-Api-Secret-Token` header; strangers get a `403` |
+| 🔁 | **Smart retries** | Temporary failures retry up to 3×; Telegram's 429 `retry_after` is honoured |
+| 🔥 | **Dead letter queue** | Permanent failures are stored with their cause for admin review & restore |
+| 🚫 | **No duplicate sends** | Atomic `UPDATE ... RETURNING` claiming — each item reaches exactly one processor |
+| 📊 | **Stats & preview** | Pending, failures, today's and total sends + a preview of the last 5 items |
+| ⏹ | **Full control** | Start/stop flushing, purge with inline confirmation, master power switch |
+| 🧩 | **Modular design** | Six focused modules with a single source of truth for config & labels |
 
-## 🧱 معماری
+## 🧱 Architecture
 
 ```text
                     ┌─────────────────────────────────────────────┐
                     │              Cloudflare Worker              │
-  ادمین تلگرام ────▶ │  /webhook ──▶ handlers.js ─┐                │
+  Telegram admin ─▶ │  /webhook ──▶ handlers.js ─┐                │
                     │                            ├──▶ queue.js ──▶ D1
-  Cron (هر دقیقه) ▶ │  scheduled ──▶ processor ──┤       ▲         │
+  Cron (per minute)▶│  scheduled ──▶ processor ──┤       ▲         │
                     │                    │       └──▶ settings   │
                     │                    ▼                 │       │
-                    │              telegram.js ────▶ Bot API ──▶ 📣 کانال
+                    │              telegram.js ────▶ Bot API ──▶ 📣 Channel
                     └─────────────────────────────────────────────┘
 ```
 
-| ماژول | مسئولیت |
+| Module | Responsibility |
 |---|---|
-| `src/index.js` | ورودی Worker: مسیریابی `fetch` و `scheduled` (Cron) |
-| `src/handlers.js` | تعامل ادمین: صف‌بندی محتوا، دکمه‌های پنل، تأییدهای inline |
-| `src/processor.js` | پردازشگر دسته‌ای صف: قفل، claim، ارسال، retry، گزارش نهایی |
-| `src/queue.js` | لایهٔ دسترسی داده: claim اتمیک، dead-letter، آمار |
-| `src/telegram.js` | کلاینت Bot API با گزارش خطای ساخت‌یافته (شامل `retry_after`) |
-| `src/constants.js` | منبع واحد: لیبل دکمه‌ها، دستورات، تنظیمات پردازش |
+| `src/index.js` | Worker entry: `fetch` routing and the `scheduled` (cron) handler |
+| `src/handlers.js` | Admin interaction: content queueing, panel buttons, inline confirmations |
+| `src/processor.js` | Batch queue processor: lock, claim, delivery, retries, final report |
+| `src/queue.js` | Data-access layer: atomic claiming, dead-letter, statistics |
+| `src/telegram.js` | Bot API client returning structured errors (including `retry_after`) |
+| `src/constants.js` | Single source of truth: button labels, commands, processor tuning |
 
-**سیاست خطا:** خطاهای موقت (قطع شبکه، 5xx، 429) بعد از backoff دوباره تلاش می‌شوند؛ خطاهای دائمی (4xx) یا اتمام سهم retry به جدول `dead_letter` می‌روند و هیچ داده‌ای گم نمی‌شود. اگر یک پردازشگر وسط کار بمیرد، آیتم‌های نیمه‌کاره بعد از `STALE_CLAIM_MS` خودکار بازیابی می‌شوند.
+**Failure policy:** temporary failures (network, 5xx, 429) are retried after a backoff; permanent ones (4xx) or exhausted retries land in `dead_letter` — no data is ever silently lost. If a processor dies mid-flight, half-claimed rows are automatically recovered after `STALE_CLAIM_MS`.
 
-## 🚀 راه‌اندازی سریع
+## 🚀 Quick start
 
-**پیش‌نیازها:** Node.js 18+، یک بات تلگرام ([@BotFather](https://t.me/BotFather))، اکانت Cloudflare.
+**Prerequisites:** Node.js 18+, a Telegram bot ([@BotFather](https://t.me/BotFather)), a Cloudflare account.
 
 ```bash
-# ۱) کلون و نصب
+# 1) Clone & install
 git clone https://github.com/CheginiSoroush/KV-Dumper.git
 cd KV-Dumper && npm install
 
-# ۲) ساخت دیتابیس D1 (شناسه‌اش را کپی کنید)
+# 2) Create the D1 database (copy its id)
 npx wrangler d1 create kv-dumper-db
 
-# ۳) ساخت فایل تنظیمات و قرار دادن database_id
+# 3) Create the config file and put the database id in it
 cp wrangler.toml.example wrangler.toml
-#    فایل را باز کنید و <YOUR_D1_DATABASE_ID> را جایگزین کنید
+#    open it and replace <YOUR_D1_DATABASE_ID>
 
-# ۴) ساخت جداول
+# 4) Create the tables
 npm run db:init
 
-# ۵) تنظیم Secrets
-npx wrangler secret put BOT_TOKEN        # توکن @BotFather
-npx wrangler secret put ADMIN_ID         # شناسهٔ عددی شما (@userinfobot)
-npx wrangler secret put CHANNEL_ID       # مثلاً @mychannel
-npx wrangler secret put WEBHOOK_SECRET   # با: openssl rand -hex 32 بسازید
+# 5) Set the secrets
+npx wrangler secret put BOT_TOKEN        # token from @BotFather
+npx wrangler secret put ADMIN_ID         # your numeric id (@userinfobot)
+npx wrangler secret put CHANNEL_ID       # e.g. @mychannel
+npx wrangler secret put WEBHOOK_SECRET   # generate with: openssl rand -hex 32
 
-# ۶) انتشار
+# 6) Deploy
 npm run deploy
 ```
 
-در نهایت وب‌هوک را ثبت کنید — این آدرس را در مرورگر باز کنید:
+Finally register the webhook — open this URL in a browser:
 
 ```text
 https://kv-dumper.<your-subdomain>.workers.dev/setwebhook?secret=<WEBHOOK_SECRET>
 ```
 
-به بات پیام `/start` بدهید؛ پنل مدیریت با دکمه‌ها باز می‌شود. تمام! 🎉
+Send `/start` to your bot and the admin panel opens with its buttons. Done! 🎉
 
-## 🔐 متغیرها و Secrets
+## 🔐 Variables & secrets
 
-| نام | نوع | توضیح |
+| Name | Kind | Description |
 |---|---|---|
-| `BOT_TOKEN` | Secret | توکن بات از [@BotFather](https://t.me/BotFather) |
-| `ADMIN_ID` | Secret | شناسهٔ عددی ادمین — فقط همین چت به ربات دسترسی دارد |
-| `CHANNEL_ID` | Secret | مقصد ارسال؛ `@username` کانال یا شناسهٔ عددی |
-| `WEBHOOK_SECRET` | Secret | کلید مشترک وب‌هوک؛ تولید با `openssl rand -hex 32` |
-| `db1` | Binding | دیتابیس D1 (در `wrangler.toml`) |
+| `BOT_TOKEN` | Secret | Bot token from [@BotFather](https://t.me/BotFather) |
+| `ADMIN_ID` | Secret | Your numeric user id — only this chat can control the bot |
+| `CHANNEL_ID` | Secret | Delivery target; `@channelusername` or numeric id |
+| `WEBHOOK_SECRET` | Secret | Shared webhook key; generate with `openssl rand -hex 32` |
+| `db1` | Binding | D1 database (in `wrangler.toml`) |
 
-> ⚠️ **نکتهٔ امنیتی:** ادمین بودن فقط با تطابق `ADMIN_ID` چک می‌شود و وب‌هوک بدون هدر secret پاسخ `403` می‌دهد. ربات پیام‌های کانال را بدون `parse_mode` می‌فرستد تا محتوای کاربر هرگز به‌عنوان HTML تفسیر نشود.
+> ⚠️ **Security note:** admin rights are checked strictly against `ADMIN_ID`, and the webhook rejects any request without the secret header with `403`. Channel posts are sent without `parse_mode` so user content is never interpreted as HTML.
 
-## 🤖 پنل مدیریت
+## 🤖 Admin panel
 
-| دکمه | عملکرد |
+| Button | Action |
 |---|---|
-| 🚀 ارسال تمام محتواها به کانال | شروع پردازش صف با گزارش زمان تقریبی |
-| ⏹ توقف ارسال صف | توقف پردازش؛ محتواها در صف می‌مانند |
-| 🗑 پاکسازی صف | حذف همهٔ موارد در انتظار — با تأیید inline |
-| 📊 آمار صف | وضعیت سیستم + صف، خطا، ارسال ۲۴ ساعت و کل |
-| 👁 نمایش آخرین محتواهای صف | پیش‌نمایش ۵ محتوای آخر |
-| 🔥 خطاهای ارسال | لیست خطاها با علت + بازگردانی گروهی/پاکسازی با تأیید |
-| 🔌 روشن/خاموش کردن سیستم | کلید اصلی؛ در حالت خاموش فقط این دکمه و `/help` کار می‌کند |
+| 🚀 Send all queued content to the channel | Start flushing with an ETA report |
+| ⏹ Stop flushing | Pause processing; items stay in the queue |
+| 🗑 Purge the queue | Drop all pending items — with inline confirmation |
+| 📊 Queue stats | System state + pending, failed, 24 h and total counters |
+| 👁 Preview the last queued items | Shows the newest 5 pending entries |
+| 🔥 Delivery errors | Failure list with causes + bulk restore / purge with confirmation |
+| 🔌 Power on/off | Master switch; while off only this button and `/help` respond |
 
-**دستورات:** `/now` · `/stop` · `/stats` · `/preview` · `/errors` · `/clear` · `/help`
+**Commands:** `/now` · `/stop` · `/stats` · `/preview` · `/errors` · `/clear` · `/help`
 
-هنگام صف‌بندی، اگر متن بیش از ۴۰۹۶ یا کپشن بیش از ۱۰۲۴ کاراکتر باشد، ربات قبل از ارسال به کانال هشدار می‌دهد.
+At enqueue time the bot warns you if text exceeds 4096 or a caption exceeds 1024 characters — before anything ever reaches the channel.
 
-## 🗄 دیتابیس
+## 🗄 Database
 
-| جدول | نقش |
+| Table | Purpose |
 |---|---|
-| `queue` | صف محتوا با وضعیت (`pending` / `sending`)، شمارندهٔ retry، `media_group_id` و مُهر زمانی claim |
-| `dead_letter` | موارد شکست‌خوردهٔ دائمی به‌همراه علت خطا |
-| `sent_log` | تاریخچهٔ ارسال‌ها (مبنای آمار «امروز» و «کل») |
-| `settings` | کلید/مقدار برای پرچم‌های اجرا (`bot_status`, `flush_enabled`, `lock_until`) |
+| `queue` | Content queue with status (`pending` / `sending`), retry counter, `media_group_id` and claim timestamps |
+| `dead_letter` | Permanently failed items, kept with the error cause |
+| `sent_log` | Delivery history (basis for the "today" and "total" stats) |
+| `settings` | Key/value store for runtime flags (`bot_status`, `flush_enabled`, `lock_until`) |
 
-نصب تازه: `schema.sql` — ارتقای v1→v2 بدون از دست رفتن داده: `migrations/v1-to-v2.sql`
+Fresh install: `schema.sql` — in-place v1→v2 upgrade without data loss: `migrations/v1-to-v2.sql`
 
-## ⚙️ تنظیمات پردازش
+## ⚙️ Processor tuning
 
-همه در `src/constants.js` — بدون نیاز به دست‌زدن به منطق:
+All in `src/constants.js` — no need to touch the logic:
 
-| ثابت | پیش‌فرض | توضیح |
+| Constant | Default | Description |
 |---|---|---|
-| `SEND_INTERVAL_MS` | ۱۰ ثانیه | فاصلهٔ بین پست‌های کانال |
-| `RETRY_BACKOFF_MS` | ۵ ثانیه | مکث بعد از خطای موقت |
-| `MAX_RETRIES` | ۳ | سهم تلاش مجدد قبل از dead-letter |
-| `ALBUM_MAX` | ۱۰ | حداکثر اعضای آلبوم (محدودیت تلگرام) |
-| `PROCESSOR_BUDGET_MS` | ۶۰ ثانیه | بودجهٔ زمانی هر تیک Cron |
-| `LOCK_LEASE_MS` | ۳ دقیقه | اجارهٔ قفل پردازش (باید از بودجه بیشتر باشد) |
-| `STALE_CLAIM_MS` | ۵ دقیقه | بازیابی آیتم‌های رهاشده در حالت `sending` |
+| `SEND_INTERVAL_MS` | 10 s | Pause between channel posts |
+| `RETRY_BACKOFF_MS` | 5 s | Pause after a temporary failure |
+| `MAX_RETRIES` | 3 | Retries tolerated before dead-lettering |
+| `ALBUM_MAX` | 10 | Max album members (Telegram limit) |
+| `PROCESSOR_BUDGET_MS` | 60 s | Wall-clock budget of one cron tick |
+| `LOCK_LEASE_MS` | 3 min | Processor-lock lease (must exceed the budget) |
+| `STALE_CLAIM_MS` | 5 min | Recovery threshold for rows stuck in `sending` |
 
-## 🌐 نقاط پایانی HTTP
+## 🌐 HTTP endpoints
 
-| مسیر | متد | محافظت | کارکرد |
+| Path | Method | Protection | Purpose |
 |---|---|---|---|
-| `/webhook` | `POST` | هدر `X-Telegram-Bot-Api-Secret-Token` | دریافت آپدیت‌های تلگرام |
-| `/setwebhook?secret=…` | `GET` | پارامتر `secret` | ثبت/به‌روزرسانی وب‌هوک |
-| `/` | `GET` | عمومی | پیام «KV-Dumper bot is running.» |
+| `/webhook` | `POST` | `X-Telegram-Bot-Api-Secret-Token` header | Receives Telegram updates |
+| `/setwebhook?secret=…` | `GET` | `secret` query param | Registers/updates the webhook |
+| `/` | `GET` | public | Returns "KV-Dumper bot is running." |
 
-## 🔄 استقرار خودکار (CI/CD)
+## 🔄 Continuous deployment (CI/CD)
 
-فایل `.github/workflows/deploy.yml` با هر پوش به `main` را با `wrangler-action` روی Cloudflare منتشر می‌کند. برای فعال‌سازی دو Secret ریپازیتوری بسازید (*Settings → Secrets and variables → Actions*):
+`.github/workflows/deploy.yml` publishes every push to `main` via `wrangler-action`. Enable it by creating two repository secrets (*Settings → Secrets and variables → Actions*):
 
-| Secret | مقدار |
+| Secret | Value |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | توکن API با مجوز **Workers Scripts: Edit** |
-| `CLOUDFLARE_ACCOUNT_ID` | شناسهٔ اکانت از داشبورد Cloudflare |
+| `CLOUDFLARE_API_TOKEN` | API token with **Workers Scripts: Edit** permission |
+| `CLOUDFLARE_ACCOUNT_ID` | Account id from the Cloudflare dashboard |
 
-اجرای دستی هم از تب Actions (گزینهٔ `workflow_dispatch`) ممکن است.
+Manual runs are available from the Actions tab (`workflow_dispatch`).
 
-## ⬆️ ارتقا از نسخهٔ ۱ به ۲
+## ⬆️ Upgrading from v1
 
-مایگریشن «درجا» است و داده‌های فعلی حفظ می‌شوند:
+The migration runs in place and keeps your existing data:
 
 ```bash
-npm run db:upgrade                       # افزودن ستون‌ها و جداول جدید
-npx wrangler secret put WEBHOOK_SECRET   # secret جدید برای وب‌هوک
-npm run deploy                           # انتشار نسخهٔ جدید
+npm run db:upgrade                       # add the new columns & tables
+npx wrangler secret put WEBHOOK_SECRET   # new webhook secret
+npm run deploy                           # ship the new version
 ```
 
-سپس `wrangler.toml` محلی را مطابق `wrangler.toml.example` به‌روز کنید (ورودی `main` و بلوک `[triggers]`) و در پایان وب‌هوک را دوباره ثبت کنید: `/setwebhook?secret=<WEBHOOK_SECRET>`
+Then update your local `wrangler.toml` to match `wrangler.toml.example` (the `main` entry and the `[triggers]` block) and re-register the webhook: `/setwebhook?secret=<WEBHOOK_SECRET>`
 
-## 🧪 صحت‌سنجی
+## 🧪 Verification
 
-- ✅ **۱۶/۱۶ چک SQL** — اجرای مایگریشن روی دیتابیس واقعی v1، claim اتمیک، رفتار قفل (دریافت/نگه‌داری/انقضا)، بازیابی آیتم رهاشده، dead-letter و بازگردانی آلبوم
-- ✅ **۱۷/۱۷ چک جریان کامل** — اجرای `processQueue` با تلگرام شبیه‌سازی‌شده: آلبوم، صف خالی، بلاک با `bot_status=off`، خطای دائمی 400 → dead-letter با ثبت علت
+- ✅ **16/16 SQL checks** — migration applied to a real v1 database, atomic claiming, lock acquire/hold/expire behaviour, stale-claim recovery, dead-lettering and album restore
+- ✅ **17/17 end-to-end flow checks** — `processQueue` executed against a mock Telegram API: albums, empty queue, blocking with `bot_status=off`, permanent 400 failure → dead-letter with the cause recorded
 
-## 🗺 نقشهٔ راه
+## 🗺 Roadmap
 
-- [ ] زمان‌بندی تاریخ/ساعت مشخص برای هر آیتم (ارسال در آینده)
-- [ ] چند ادمین با سطوح دسترسی
-- [ ] چند کانال با انتخاب مقصد هنگام صف‌بندی
-- [ ] پنل چندزبانه
-- [ ] صفحهٔ وب داشبورد آماری
+- [ ] Per-item publish scheduling (send at a future date/time)
+- [ ] Multiple admins with permission levels
+- [ ] Multiple channels with per-item destination choice
+- [ ] Multilingual panel
+- [ ] Web dashboard for stats
 
-## 📄 لایسنس
+## 📄 License
 
-MIT © [CheginiSoroush](https://github.com/CheginiSoroush) — جزئیات در [LICENSE](LICENSE).
+MIT © [CheginiSoroush](https://github.com/CheginiSoroush) — see [LICENSE](LICENSE).
